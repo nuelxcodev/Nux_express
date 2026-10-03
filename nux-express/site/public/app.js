@@ -194,7 +194,7 @@ const faq=()=>`<section id="faq" class="w"><h2>${t('faq_h')}</h2>${[1,2,3].map(i
 const img=(n,alt,cls)=>`<img class="${cls||'pic'}" src="images/${n}" alt="${alt||''}" loading="lazy" onerror="this.remove()">`;
 const ph=n=>`<figure class="phs"><span><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18v14H3zM3 16l5-5 4 4 3-3 6 6M9 9h.01"/></svg><small>images/${n}</small></span>${img(n)}</figure>`;
 const gal=()=>`<section class="w"><h2>${t('gal_h')}</h2><div class="gg">${[1,2,3].map(i=>ph('gallery-'+i+'.jpg')).join('')}</div></section>`;
-const fade=()=>`<section class="fade"><div class="fmask"><div class="fph">images/banner.jpg</div>${img('banner.jpg')}</div><div class="fov"></div><div class="w"><h2>${t('fade_h')}</h2><p>${t('fade_d')}</p><button class="btn" onclick="nav('track')">${t('track')}</button></div></section>`;
+const fade=()=>`<section class="fade"><div class="fmask"><div class="fph">images/banner.png</div>${img('banner.png')}</div><div class="fov"></div><div class="w"><h2>${t('fade_h')}</h2><p>${t('fade_d')}</p><button class="btn" onclick="nav('track')">${t('track')}</button></div></section>`;
 const RC={};
 const stk=r=>r.pz?'s_hold':r.ex?'s_ex':['s_pend','s_picked','s_fac','s_transit','s_out','s_del'][r.cur];
 function rcHtml(r){const key=stk(r),[fg,bg]=C[key],k=r.chg||{s:'sv1',w:1,fee:30},hd=Math.round(k.fee*8)/100,tot=k.fee+hd,
