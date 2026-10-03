@@ -13,6 +13,7 @@ export function toPublic(o) {
   return {
     cur: o.cur, ex: o.ex ? 1 : 0, from: o.from, to: o.to,
     loc: c[o.cur] + (country ? ', ' + country : ''),
+    pz: o.paused ? 1 : 0, pr: o.paused ? o.holdReason || 'other' : '', pm: o.paused ? o.holdMessage || '' : '', pa: o.paused ? o.holdAt || '' : '',
     eta: o.eta, c, ts, chg: { s: o.service, w: o.weight, fee: o.fee },
   };
 }

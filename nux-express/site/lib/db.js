@@ -1,15 +1,29 @@
-// Read-only access to the shared database service. Uses the READ key, which cannot write.
-const BASE = process.env.JSON_SERVER_URL || 'http://127.0.0.1:4000';
+// Read-only access to MongoDB for the public site. Server-side only.
+// Use a database user with the "read" role for MONGODB_URI here: this code cannot write, and neither can its credentials.
+import { MongoClient } from 'mongodb';
+
+const NAME = process.env.MONGODB_DB || 'nux_express';
+
+function conn() {
+  if (!globalThis._nuxSiteMongo) {
+    const uri = process.env.MONGODB_URI;
+    if (!uri) throw new Error('MONGODB_URI is not set');
+    const p = new MongoClient(uri, { maxPoolSize: 10, serverSelectionTimeoutMS: 5000 }).connect();
+    p.catch(() => { if (globalThis._nuxSiteMongo === p) globalThis._nuxSiteMongo = undefined; });
+    globalThis._nuxSiteMongo = p;
+  }
+  return globalThis._nuxSiteMongo;
+}
+
+// Only the fields the tracking page needs. Customer name, email and phone are never even fetched.
+const PUBLIC_FIELDS = {
+  _id: 0, trackingId: 1, cur: 1, ex: 1, from: 1, to: 1, eta: 1, service: 1, weight: 1, fee: 1,
+  events: 1, createdAt: 1, paused: 1, holdReason: 1, holdMessage: 1, holdAt: 1,
+};
 
 export const db = {
   byTracking: async (id) => {
-    const r = await fetch(BASE + '/orders?trackingId=' + encodeURIComponent(id), {
-      cache: 'no-store',
-      headers: { 'x-api-key': process.env.DB_READ_KEY || '' },
-    });
-    if (r.status === 404) return null;
-    if (!r.ok) throw new Error('database ' + r.status);
-    const a = await r.json();
-    return a[0] || null;
+    const c = (await conn()).db(NAME).collection('orders');
+    return (await c.findOne({ trackingId: String(id) }, { projection: PUBLIC_FIELDS })) || null;
   },
 };

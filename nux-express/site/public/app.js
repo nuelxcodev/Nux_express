@@ -33,6 +33,16 @@ s_fac:"At facility|Au centre de tri|En el centro|Im Zentrum|Na unidade|في ال
 s_transit:"In transit|En transit|En tránsito|Unterwegs|Em trânsito|قيد النقل|运输中",
 s_out:"Out for delivery|En cours de livraison|En reparto|In Zustellung|Saiu para entrega|خرجت للتسليم|派送中",
 s_del:"Delivered|Livré|Entregado|Zugestellt|Entregue|تم التسليم|已送达",
+s_hold:"On hold|En attente|En pausa|Angehalten|Em espera|متوقفة مؤقتًا|已暂停",
+d_hold:"Your shipment is temporarily on hold. Details below.|Votre colis est temporairement en attente. Détails ci-dessous.|Tu envío está en pausa temporalmente. Detalles abajo.|Ihre Sendung ist vorübergehend angehalten. Details unten.|Sua encomenda está temporariamente em espera. Detalhes abaixo.|شحنتك متوقفة مؤقتًا. التفاصيل أدناه.|您的包裹暂时被搁置，详情见下方。",
+hold_h:"Message from Nux Express|Message de Nux Express|Mensaje de Nux Express|Nachricht von Nux Express|Mensagem da Nux Express|رسالة من Nux Express|来自 Nux Express 的消息",
+hold_since:"On hold since|En attente depuis|En pausa desde|Angehalten seit|Em espera desde|متوقفة منذ|暂停时间",
+h_customs:"Held at customs|Retenu en douane|Retenido en aduana|Beim Zoll festgehalten|Retido na alfândega|محتجزة في الجمارك|海关扣留",
+h_immigration:"Immigration review|Contrôle d'immigration|Revisión de inmigración|Einwanderungsprüfung|Análise de imigração|مراجعة الهجرة|移民审查",
+h_weather:"Weather delay|Retard météo|Retraso por clima|Wetterverzögerung|Atraso por clima|تأخير بسبب الطقس|天气延误",
+h_docs:"Documents required|Documents requis|Documentos requeridos|Dokumente erforderlich|Documentos necessários|مستندات مطلوبة|需要文件",
+h_address:"Address issue|Problème d'adresse|Problema de dirección|Adressproblem|Problema de endereço|مشكلة في العنوان|地址问题",
+h_other:"Delayed|Retardé|Retrasado|Verzögert|Atrasado|متأخرة|延误",
 s_ex:"Exception|Incident|Incidencia|Problem|Ocorrência|استثناء|异常",
 d_proc:"Your package is being processed.|Votre colis est en cours de traitement.|Tu paquete se está procesando.|Ihr Paket wird bearbeitet.|Sua encomenda está sendo processada.|يجري تجهيز طردك.|您的包裹正在处理中。",
 d_transit:"Your package is on its way to the destination.|Votre colis est en route vers sa destination.|Tu paquete va de camino a su destino.|Ihr Paket ist auf dem Weg zum Ziel.|Sua encomenda está a caminho do destino.|طردك في الطريق إلى وجهته.|您的包裹正在运往目的地。",
@@ -135,7 +145,7 @@ for(const k in T)T[k]=T[k].split('|');
 const S=['s_created','s_picked','s_dep','s_transit','s_out','s_del'];
 const D={};
 // status key -> [strong colour, tint]
-const C={s_pend:['#b45309','#fef3c7'],s_picked:['#1d4ed8','#dbeafe'],s_fac:['#1d4ed8','#dbeafe'],s_transit:['#0b1f4d','#dde4f5'],s_out:['#c2410c','#ffedd5'],s_del:['#15803d','#dcfce7'],s_ex:['#b91c1c','#fee2e2']};
+const C={s_pend:['#b45309','#fef3c7'],s_picked:['#1d4ed8','#dbeafe'],s_fac:['#1d4ed8','#dbeafe'],s_transit:['#0b1f4d','#dde4f5'],s_out:['#c2410c','#ffedd5'],s_del:['#15803d','#dcfce7'],s_ex:['#b91c1c','#fee2e2'],s_hold:['#b45309','#fef3c7']};
 
 let lang='en',view='home',menu=0,q='',state='idle',res=null;
 try{lang=localStorage.getItem('nux-lang')||'en'}catch(e){}
@@ -186,7 +196,7 @@ const ph=n=>`<figure class="phs"><span><svg viewBox="0 0 24 24" width="30" heigh
 const gal=()=>`<section class="w"><h2>${t('gal_h')}</h2><div class="gg">${[1,2,3].map(i=>ph('gallery-'+i+'.jpg')).join('')}</div></section>`;
 const fade=()=>`<section class="fade"><div class="fmask"><div class="fph">images/banner.jpg</div>${img('banner.jpg')}</div><div class="fov"></div><div class="w"><h2>${t('fade_h')}</h2><p>${t('fade_d')}</p><button class="btn" onclick="nav('track')">${t('track')}</button></div></section>`;
 const RC={};
-const stk=r=>r.ex?'s_ex':['s_pend','s_picked','s_fac','s_transit','s_out','s_del'][r.cur];
+const stk=r=>r.pz?'s_hold':r.ex?'s_ex':['s_pend','s_picked','s_fac','s_transit','s_out','s_del'][r.cur];
 function rcHtml(r){const key=stk(r),[fg,bg]=C[key],k=r.chg||{s:'sv1',w:1,fee:30},hd=Math.round(k.fee*8)/100,tot=k.fee+hd,
 cu=new Intl.NumberFormat(lang,{style:'currency',currency:'USD'}),dd=x=>new Intl.DateTimeFormat(lang,{dateStyle:'medium'}).format(new Date(x)),
 bars=[...q].map(c=>c.charCodeAt(0)).flatMap(n=>[n%3+1,n%2+1]).map((w,i)=>`<i style="width:${w*2}px;${i%2?'':'background:#0b1f4d'}"></i>`).join('');
@@ -242,16 +252,17 @@ return `<div class="hb"><div class="w"><div class="hero"><div><span class="tag">
 <div class="about"><section id="about" class="w ab"><div><h2>${t('about_h')}</h2><p>${t('about_d')}</p><p>${t('about_d2')}</p></div><div class="slot">${aboutArt}${img('about.jpg')}</div></section><div class="w ctr"><h3>${t('ctry_h')}</h3><p>${t('ctry_d')}</p><ul class="flags">${flags()}</ul></div></div>
 ${fleet}<div class="w"><div class="cta"><div><h2>${t('cta_h')}</h2><p>${t('cta_d')}</p><button class="btn" onclick="nav('track')">${t('track')}</button></div><div class="slot cs">${courier}${img('courier.png')}</div></div></div>${gal()}${faq()}<section id="contact" class="w"><h2>${t('contact')}</h2><p class="lead">${t('ct_d')}</p><dl class="ct card"><div><dt>${t('em')}</dt><dd>support@example.com</dd></div><div><dt>${t('tel')}</dt><dd dir="ltr" style="text-align:start">+1 XXX XXX XXXX</dd></div><div><dt>${t('ad')}</dt><dd>New York, USA</dd></div></dl></section>`}
 
+const holdBox=r=>{const k='h_'+r.pr;return `<div class="hn" role="status"><b>${t(T[k]?k:'h_other')}</b><small>${t('hold_h')}</small><p>${esc(r.pm||'')}</p>${r.pa?`<small>${t('hold_since')} ${dtm(r.pa)}</small>`:''}</div>`};
 function result(){
 if(state==='idle')return `<div class="card ms"><div class="ic">${I(P.box)}</div><h3>${t('th')}</h3><p>${t('empty')}</p></div>`;
 if(state==='load')return `<div class="card"><div class="sk" style="width:40%"></div><div class="sk" style="height:34px;width:60%"></div><div class="sk" style="width:80%"></div></div><div class="two"><div class="card"><div class="sk"></div><div class="sk" style="width:70%"></div><div class="sk"></div><div class="sk" style="width:50%"></div></div><div class="card"><div class="sk"></div><div class="sk" style="width:80%"></div><div class="sk"></div></div></div>`;
 if(state==='err'||state==='lock')return `<div class="card ms e"><div class="ic">${I(P.x)}</div><h3>${t('nf')}</h3><p>${t(state==='lock'?'lock':'nfd')}</p><button class="btn" onclick="q='';state='idle';render();document.querySelector('.in input').focus()">${t('retry')}</button></div>`;
-const r=res,key=r.ex?'s_ex':['s_pend','s_picked','s_fac','s_transit','s_out','s_del'][r.cur];
-const ds=r.ex?'d_ex':r.cur<3?'d_proc':['','','','d_transit','d_out','d_del'][r.cur];
+const r=res,key=r.pz?'s_hold':r.ex?'s_ex':['s_pend','s_picked','s_fac','s_transit','s_out','s_del'][r.cur];
+const ds=r.pz?'d_hold':r.ex?'d_ex':r.cur<3?'d_proc':['','','','d_transit','d_out','d_del'][r.cur];
 const [fg,bg]=C[key],done=r.cur===5;
 const tl=S.map((s,i)=>{const d=done||i<r.cur,c=!done&&i===r.cur,cls=d?'d':c?'c':'p',ic=d||(c&&r.ex);
-return `<li class="${cls}"><span class="dt">${c&&r.ex?I(P.x):d?I(P.check):''}</span><b>${t(c&&r.ex?'s_ex':s)}</b><span>${i<=r.cur?esc(r.c[i])+' · '+dtm(r.ts[i]):t('s_pend')}</span></li>`}).join('');
-return `<div class="card sc" style="--c:${fg};--cb:${bg}"><small>${t('ship')}</small><div class="id">${esc(q)}</div><small>${t('cur')}</small><div class="st"><i></i>${t(key)}</div><div>${t(ds)}</div><div class="rtk"><span>${r.from.split(',')[0]}</span><div class="ln" style="--w:${r.ex?40:r.cur/5*100}%"><i></i><b>${VAN}</b></div><span>${r.to.split(',')[0]}</span></div><div class="facts"><div><small>${t('loc')}</small><b>${r.loc}</b></div><div><small>${t('eta')}</small><b>${dte(r.eta)}</b><em>${rel(r)}</em></div><div><small>${t('from')}</small><b>${r.from}</b></div><div><small>${t('to')}</small><b>${r.to}</b></div></div></div>
+return `<li class="${cls}"><span class="dt">${c&&r.pz?I('M8 5v14M16 5v14'):c&&r.ex?I(P.x):d?I(P.check):''}</span><b>${t(c&&r.ex?'s_ex':s)}</b><span>${i<=r.cur?esc(r.c[i])+' · '+dtm(r.ts[i]):t('s_pend')}</span></li>`}).join('');
+return `<div class="card sc" style="--c:${fg};--cb:${bg}"><small>${t('ship')}</small><div class="id">${esc(q)}</div><small>${t('cur')}</small><div class="st"><i></i>${t(key)}</div><div>${t(ds)}</div>${r.pz?holdBox(r):''}<div class="rtk"><span>${r.from.split(',')[0]}</span><div class="ln" style="--w:${r.ex&&!r.pz?40:r.cur/5*100}%"><i></i><b>${VAN}</b></div><span>${r.to.split(',')[0]}</span></div><div class="facts"><div><small>${t('loc')}</small><b>${r.loc}</b></div><div><small>${t('eta')}</small><b>${dte(r.eta)}</b><em>${rel(r)}</em></div><div><small>${t('from')}</small><b>${r.from}</b></div><div><small>${t('to')}</small><b>${r.to}</b></div></div></div>
 <div class="two"><div class="card" style="--c:${fg};--cb:${bg}"><h3 style="margin-top:0">${t('hist')}</h3><ol class="tl">${tl}</ol></div>
 <div class="card"><h3 style="margin-top:0">${t('det')}</h3><dl class="dl"><div><dt>${t('id')}</dt><dd dir="ltr" style="text-align:start">${esc(q)}</dd></div><div><dt>${t('from')}</dt><dd>${r.from}</dd></div><div><dt>${t('to')}</dt><dd>${r.to}</dd></div><div><dt>${t('loc')}</dt><dd>${r.loc}</dd></div><div><dt>${t('eta')}</dt><dd>${dte(r.eta)}</dd></div><div><dt>${t('pkg')}</dt><dd>${t('pkgv')}</dd></div></dl><div class="acts"><button class="gb dl" onclick="dlr(this)">${I('M12 3v12m0 0l-4-4m4 4l4-4M4 19h16')}${t('dl')}</button><button class="gb" onclick="cp(this)">${t('copy')}</button></div></div></div>${r.cur<5?ntf():''}`}
 

@@ -1,5 +1,6 @@
 module.exports = {
   poweredByHeader: false,
+  experimental: { serverComponentsExternalPackages: ['mongodb'] },
   async headers() {
     return [{ source: '/:path*', headers: [
       { key: 'X-Content-Type-Options', value: 'nosniff' },

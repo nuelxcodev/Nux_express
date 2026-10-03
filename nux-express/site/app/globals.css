@@ -450,4 +450,8 @@ body{background:#fff}
 .ch form{display:flex;gap:8px}
 .ch input{flex:1;min-width:0;height:44px;border:1px solid var(--ln);border-radius:12px;padding:0 12px;font:inherit;background:#fff;color:var(--tx)}
 .cp .ch form button{width:44px;height:44px;padding:0;justify-content:center;background:var(--red);color:#fff;border-radius:12px;flex:none}
-.cp .ch form button:hover{background:var(--red2)}
+.cp .ch form button:hover{background:var(--red2)}/* Admin hold notice on the tracking card */
+.hn{margin:16px 0 4px;padding:14px 16px;border-radius:14px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);display:grid;gap:4px}
+.hn b{font-size:16px;font-weight:800}
+.card.sc .hn p{margin:2px 0 4px;color:#fff;font-weight:600;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+.hn small{opacity:.9}
