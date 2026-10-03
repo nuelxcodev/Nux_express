@@ -1,26 +1,51 @@
-// Full access to the shared database service. Uses the ADMIN key. Server-side only.
-const BASE = process.env.JSON_SERVER_URL || 'http://127.0.0.1:4000';
+// Full read/write access to MongoDB. Server-side only (never imported by client code).
+// Same function names as the old json-server version, so the routes did not have to change.
+import { MongoClient, ObjectId } from 'mongodb';
 
-async function call(path, opts = {}) {
-  const r = await fetch(BASE + path, {
-    cache: 'no-store',
-    ...opts,
-    headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.DB_ADMIN_KEY || '', ...(opts.headers || {}) },
-  });
-  if (r.status === 404) return null;
-  if (!r.ok) throw new Error('database ' + r.status);
-  const t = await r.text();
-  return t ? JSON.parse(t) : null;
+const NAME = process.env.MONGODB_DB || 'nux_express';
+
+// One shared connection per server process (also survives Next.js dev hot reloads).
+function conn() {
+  if (!globalThis._nuxAdminMongo) {
+    const uri = process.env.MONGODB_URI;
+    if (!uri) throw new Error('MONGODB_URI is not set');
+    const p = new MongoClient(uri, { maxPoolSize: 10, serverSelectionTimeoutMS: 5000 }).connect();
+    p.catch(() => { if (globalThis._nuxAdminMongo === p) globalThis._nuxAdminMongo = undefined; }); // retry on next request
+    globalThis._nuxAdminMongo = p;
+  }
+  return globalThis._nuxAdminMongo;
 }
 
+async function col() {
+  const c = (await conn()).db(NAME).collection('orders');
+  if (!globalThis._nuxIndexes) {
+    globalThis._nuxIndexes = c.createIndex({ trackingId: 1 }, { unique: true })
+      .then(() => c.createIndex({ createdAt: -1 }))
+      .catch((e) => { globalThis._nuxIndexes = undefined; console.error('index setup failed:', e.message); });
+  }
+  return c;
+}
+
+// Mongo _id -> the string `id` the admin UI and API already use.
+const out = (d) => { if (!d) return null; const { _id, ...rest } = d; return { id: String(_id), ...rest }; };
+const oid = (id) => {
+  const s = String(id || '');
+  return /^[0-9a-f]{24}$/i.test(s) ? new ObjectId(s) : null;
+};
+
 export const db = {
-  list: () => call('/orders?_sort=createdAt&_order=desc'),
-  byTracking: async (id) => {
-    const a = await call('/orders?trackingId=' + encodeURIComponent(id));
-    return (a && a[0]) || null;
+  list: async () => (await (await col()).find({}).sort({ createdAt: -1 }).toArray()).map(out),
+  byTracking: async (id) => out(await (await col()).findOne({ trackingId: String(id) })),
+  get: async (id) => { const _id = oid(id); return _id ? out(await (await col()).findOne({ _id })) : null; },
+  create: async (o) => {
+    const doc = { ...o };
+    const r = await (await col()).insertOne(doc);
+    return out({ ...doc, _id: r.insertedId });
   },
-  get: (id) => call('/orders/' + encodeURIComponent(id)),
-  create: (o) => call('/orders', { method: 'POST', body: JSON.stringify(o) }),
-  update: (id, p) => call('/orders/' + encodeURIComponent(id), { method: 'PATCH', body: JSON.stringify(p) }),
-  remove: (id) => call('/orders/' + encodeURIComponent(id), { method: 'DELETE' }),
+  update: async (id, p) => {
+    const _id = oid(id);
+    if (!_id) return null;
+    return out(await (await col()).findOneAndUpdate({ _id }, { $set: p }, { returnDocument: 'after' }));
+  },
+  remove: async (id) => { const _id = oid(id); if (_id) await (await col()).deleteOne({ _id }); return null; },
 };

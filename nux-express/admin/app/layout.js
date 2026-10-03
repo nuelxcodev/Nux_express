@@ -1,4 +1,5 @@
 export const metadata = { title: 'Nux Express Admin', robots: { index: false, follow: false } };
+export const viewport = { width: 'device-width', initialScale: 1 };
 
 export default function RootLayout({ children }) {
   return (

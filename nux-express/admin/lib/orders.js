@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import { db } from './db';
 
 export const SERVICES = ['sv1', 'sv2', 'sv3', 'sv4']; // standard, express, international, business
+export const HOLD_REASONS = ['customs', 'immigration', 'weather', 'docs', 'address', 'other'];
 const cityOf = (s) => String(s).split(',')[0].trim();
 
 export async function newTrackingId() {
@@ -25,6 +26,7 @@ export function toPublic(o) {
   return {
     cur: o.cur, ex: o.ex ? 1 : 0, from: o.from, to: o.to,
     loc: c[o.cur] + (country ? ', ' + country : ''),
+    pz: o.paused ? 1 : 0, pr: o.paused ? o.holdReason || 'other' : '', pm: o.paused ? o.holdMessage || '' : '', pa: o.paused ? o.holdAt || '' : '',
     eta: o.eta, c, ts, chg: { s: o.service, w: o.weight, fee: o.fee },
   };
 }
