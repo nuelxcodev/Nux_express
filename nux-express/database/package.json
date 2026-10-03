@@ -1,7 +1,13 @@
 {
   "name": "nux-express-database",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "scripts": { "dev": "node --env-file=.env server.js", "start": "node server.js" },
-  "dependencies": { "json-server": "0.17.4" }
+  "description": "MongoDB tooling: one-time import from the old json-server db.json, and index setup. There is no server here any more.",
+  "scripts": {
+    "migrate": "node --env-file=.env migrate-from-json.js",
+    "migrate:dry": "node --env-file=.env migrate-from-json.js --dry-run",
+    "indexes": "node --env-file=.env setup-indexes.js",
+    "start": "node setup-indexes.js"
+  },
+  "dependencies": { "mongodb": "6.9.0" }
 }
