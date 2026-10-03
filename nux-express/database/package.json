@@ -1,0 +1,7 @@
+{
+  "name": "nux-express-database",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": { "dev": "node --env-file=.env server.js", "start": "node server.js" },
+  "dependencies": { "json-server": "0.17.4" }
+}
